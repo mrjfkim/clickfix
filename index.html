@@ -635,6 +635,7 @@
     lureBody.innerHTML = s.lureHTML;
     runInput.value = '';
     runOk.disabled = true;
+    pasteBtn.style.display = '';
     pasteHint.textContent = '↳ copy the command, then click this field and press Ctrl+V (or use “Paste”)';
     pasteHint.style.color = 'var(--mint-ink)';
     breakdownPanel.style.display = 'none';
@@ -681,9 +682,14 @@
     if (s.manualCopy){
       var payloadEl = document.getElementById('manualPayload');
       if (payloadEl) payloadEl.textContent = s.command;
-      pasteHint.textContent = '↳ select + Ctrl+C, then click the Run field and press Ctrl+V — a real OS paste, no button needed';
-      addLogRow('warn', 'No script runs here — nothing is written until YOU press Ctrl+C. Copy it, then use “Check clipboard now” to see what your extension did.');
+      // No "Paste" button here on purpose: that button uses the Clipboard API (readText),
+      // which API-blocking protection stops. A manual OS paste (Ctrl+V) is the only path that
+      // mirrors the real attack — so the field is the target, not a button.
+      pasteBtn.style.display = 'none';
+      pasteHint.textContent = '↳ select + Ctrl+C, then click the Run field and press Ctrl+V — a real OS paste, no button, nothing for API blocking to catch';
+      addLogRow('warn', 'No script runs here — nothing is written until YOU press Ctrl+C. The “Paste” button is hidden on purpose: it would use the Clipboard API, which API-only blocking stops. Ctrl+V is an OS paste and slips right past it.');
       addRecheckButton(s);
+      try { runInput.focus({ preventScroll: true }); } catch(e) { runInput.focus(); }
     }
   }
 
