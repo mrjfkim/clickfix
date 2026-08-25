@@ -368,10 +368,10 @@
               <p class="prompt">Type the name of a program, folder, document, or internet resource, and
                 Windows will open it for you.</p>
               <div class="run-field">
-                <input type="text" id="runInput" placeholder="Open:" readonly>
+                <input type="text" id="runInput" placeholder="Open:" autocomplete="off" spellcheck="false" aria-label="Run command">
                 <button id="pasteBtn">Paste</button>
               </div>
-              <p class="paste-hint" id="pasteHint">↳ copy the fix command on the lure, then paste it here</p>
+              <p class="paste-hint" id="pasteHint">↳ copy the command, then click this field and press Ctrl+V (or use “Paste”)</p>
               <div class="run-actions">
                 <button id="runOk" class="primary" disabled>OK</button>
                 <button id="runCancel">Cancel</button>
@@ -635,7 +635,7 @@
     lureBody.innerHTML = s.lureHTML;
     runInput.value = '';
     runOk.disabled = true;
-    pasteHint.textContent = '↳ copy the fix command on the lure, then paste it here';
+    pasteHint.textContent = '↳ copy the command, then click this field and press Ctrl+V (or use “Paste”)';
     pasteHint.style.color = 'var(--mint-ink)';
     breakdownPanel.style.display = 'none';
     breakdownPanel.innerHTML = '';
@@ -681,7 +681,7 @@
     if (s.manualCopy){
       var payloadEl = document.getElementById('manualPayload');
       if (payloadEl) payloadEl.textContent = s.command;
-      pasteHint.textContent = '↳ select the command, press Ctrl+C yourself, then click "Paste"';
+      pasteHint.textContent = '↳ select + Ctrl+C, then click the Run field and press Ctrl+V — a real OS paste, no button needed';
       addLogRow('warn', 'No script runs here — nothing is written until YOU press Ctrl+C. Copy it, then use “Check clipboard now” to see what your extension did.');
       addRecheckButton(s);
     }
@@ -699,8 +699,19 @@
       pasteHint.textContent = '↳ clipboard is empty right now — nothing to paste';
       pasteHint.style.color = 'var(--safe)';
     } else {
-      pasteHint.textContent = '↳ clipboard read was denied by the browser — grant permission and try again';
+      pasteHint.textContent = '↳ the “Paste” button uses the Clipboard API, which is blocked/denied here — click the field and press Ctrl+V instead (a real OS paste always works)';
       pasteHint.style.color = 'var(--warn)';
+    }
+  });
+
+  // Native Ctrl+V (or typing) into the Run field — an OS paste that needs no Clipboard API.
+  // This is the authentic path and the one that proves the manual-copy blind spot.
+  runInput.addEventListener('input', function(){
+    var v = runInput.value.trim();
+    runOk.disabled = v.length === 0;
+    if (v.length){
+      pasteHint.textContent = '↳ pasted with a real Ctrl+V. Click “OK” to run it, like the target would.';
+      pasteHint.style.color = 'var(--safe)';
     }
   });
 
