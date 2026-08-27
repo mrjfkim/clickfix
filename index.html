@@ -83,8 +83,8 @@
     background:var(--forest-deep); color:#C9DBD3; border-bottom:1px solid var(--forest-line);
     position:sticky; top:0; z-index:60;
   }
-  .banner .container{ display:flex; align-items:flex-start; gap:12px; padding:11px 28px; }
-  .banner-dot{ width:8px; height:8px; border-radius:50%; background:var(--mint); flex:none; margin-top:6px;
+  .banner .container{ display:flex; align-items:center; justify-content:center; gap:12px; padding:11px 28px; text-align:center; }
+  .banner-dot{ width:8px; height:8px; border-radius:50%; background:var(--mint); flex:none;
     box-shadow:0 0 0 4px rgba(80,232,168,.16); }
   .banner p{ font-size:12.5px; line-height:1.5; }
   .banner strong{ color:var(--mint); font-weight:600; letter-spacing:.02em; }
@@ -311,10 +311,7 @@
 <div class="banner">
   <div class="container">
     <span class="banner-dot" aria-hidden="true"></span>
-    <p><strong>LIVE CLIPBOARD DEMO.</strong> Clicking “Copy fix command” performs a real
-    <code>navigator.clipboard</code> write - the same mechanism ClickFix payloads use - so clipboard
-    protection has something genuine to intercept. No command here ever runs on its own; only a person
-    manually pasting into a real Run or terminal window could do that, and this page cannot trigger that step.</p>
+    <p>This does the same thing the bad guys do in ClickFix attacks - a real clipboard write.</p>
   </div>
 </div>
 
