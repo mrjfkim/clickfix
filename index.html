@@ -318,35 +318,8 @@
   </div>
 </div>
 
-<header class="hero">
-  <div class="container">
-    <span class="eyebrow">Clipboard-hijack demo</span>
-    <h1>Click Fix <em>Demo</em></h1>
-    <p class="lede">
-      ClickFix is social engineering that gets a visitor to fix a fake problem themselves — by opening
-      the Windows Run dialog and pasting a command copied from a page. <b>The “fix” is the infection.</b>
-      This demo reproduces four common lures and performs a <b>real</b> clipboard write for each, so you
-      can point clipboard protection at it and watch the interception happen live.
-    </p>
-    <ul class="facts">
-      <li><span class="k" aria-hidden="true"></span><b>HTTPS-only</b>&nbsp;— secure context required</li>
-      <li><span class="k" aria-hidden="true"></span><b>No external requests</b>&nbsp;— fully client-side</li>
-      <li><span class="k" aria-hidden="true"></span><b>Defanged payloads</b>&nbsp;— inert even if run</li>
-    </ul>
-  </div>
-</header>
-
 <section id="scenarios">
   <div class="container">
-    <div class="section-head">
-      <div class="idx">01 — Try it live</div>
-      <h2>Four lures, one mechanism</h2>
-      <p>Pick a scenario. Click “Copy fix command” exactly as a target would — it really does write to your
-      clipboard. Use “Check clipboard now” to poll what’s actually sitting there, so a quarantine-and-scan
-      flow resolves in front of you. The last scenario, <b>Manual copy</b>, has no button at all — you copy
-      the command yourself, which is how a lure slips past protection that only blocks scripted writes.</p>
-    </div>
-
     <div class="tabs" role="tablist" aria-label="ClickFix scenarios">
       <button class="tab" role="tab" aria-selected="true" data-scenario="verify">🛡️ Identity verification</button>
       <button class="tab" role="tab" aria-selected="false" data-scenario="meet">🎥 Video call error</button>
@@ -396,48 +369,6 @@
     </div>
   </div>
 </section>
-
-<div class="band">
-  <section id="modes">
-    <div class="container">
-      <div class="section-head">
-        <div class="idx">02 — Demoing your extension</div>
-        <h2>Compare both protection modes</h2>
-        <p>This page’s job is always the same: attempt a real clipboard write. What happens to that write
-        depends entirely on how the extension is configured — switch modes in its options and re-run the
-        “Copy fix command” step above to show the difference live.</p>
-      </div>
-      <div class="modes-grid">
-        <div class="panel mode-card m1">
-          <div class="mh"><span class="tagnum">Mode 01</span><h3>Clipboard API Only</h3></div>
-          <p>Blocks every programmatic clipboard write, unconditionally — content is never inspected.</p>
-          <ul>
-            <li><b>Expected result here:</b> the write attempt above fails or is silently dropped every time, regardless of scenario.</li>
-            <li><b>Blind spot to call out:</b> a lure that asks the target to manually select and copy text (no script involved) still gets through in this mode — that’s the <b>Manual copy</b> scenario above. Mode&nbsp;02 still catches it, because it inspects clipboard contents no matter how they got there.</li>
-          </ul>
-        </div>
-        <div class="panel mode-card m2">
-          <div class="mh"><span class="tagnum">Mode 02</span><h3>AI Classifier</h3></div>
-          <p>Lets the write land, immediately quarantines the clipboard behind a placeholder, screens the
-          text with local heuristics and a cloud classifier, then restores it if benign.</p>
-          <ul>
-            <li><b>Expected result here:</b> click “Check clipboard now” right after copying and again a moment later — you should see the placeholder, then a final verdict, since every payload here mirrors a real ClickFix command.</li>
-            <li><b>What it catches that Mode 01 misses:</b> nothing extra for scripted copies — this mode is about deciding intent, not just blocking the mechanism.</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
-</div>
-
-<footer>
-  <div class="container">
-    <span class="brand">Click Fix <span>Demo</span></span>
-    <p>Built to showcase clipboard-hijack defense. Every domain shown is defanged (<code>hxxps://</code>,
-    <code>[.]invalid</code>) and non-resolvable, so a copied payload does nothing even if pasted and run.
-    The page makes no network requests and loads no external resources beyond its web fonts.</p>
-  </div>
-</footer>
 
 <script>
 (function(){
